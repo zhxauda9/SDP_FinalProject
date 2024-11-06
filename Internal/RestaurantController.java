@@ -10,39 +10,32 @@ public class RestaurantController {
     public RestaurantController(Order order) {
         this.currentOrder = order;
     }
-
-    // Adds a dish to the current order
     public void addDishToOrder(Dish dish) {
         if (dish != null) {
             currentOrder.addDish(dish);
         }
     }
-
-    // Removes a dish from the current order
     public void removeDishFromOrder(Dish dish) {
         if (dish != null) {
             currentOrder.removeDish(dish);
         }
     }
-
     public double finalizeOrder() {
-        double total = currentOrder.calculateTotal() + currentOrder.calculateTotal() * 0.1;
-
-        // Create a copy of the current order to save to history
+        if (currentOrder.getDishes().isEmpty()) {
+            System.out.println("Order is empty.");
+            return 0;
+        }
+        double total = currentOrder.calculateTotal();
+        total += total * 0.1;
         Order savedOrder = currentOrder.copy();
         savedOrder.saveOrderToHistory();
-
-        // Clear the current order after finalizing
         currentOrder.clearOrder();
         return total;
     }
 
-    // Clears the current order
     public void clearOrder() {
         currentOrder.clearOrder();
     }
-
-    // Gets the order history from all saved orders
     public List<Order> getOrderHistory() {
         return Order.getAllOrders();
     }

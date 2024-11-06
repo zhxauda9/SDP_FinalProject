@@ -6,6 +6,7 @@ import FinalProject.Internal.Objects.Dish;
 import FinalProject.Internal.Objects.DishCategory;
 import FinalProject.Internal.Objects.Order;
 import FinalProject.Internal.Observers.UITextObserver;
+import FinalProject.Internal.RestaurantController;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,9 +23,11 @@ public class RestaurantAppSwing {
     private List<Dish> menu;
     private Order currentOrder;
     private JComboBox<String> categoryComboBox;
+    private RestaurantController restaurantController;
 
     public RestaurantAppSwing() {
         currentOrder = Order.getInstance();
+        restaurantController = new RestaurantController(currentOrder);
         menu = new ArrayList<>();
         initializeMenu();
         initializeUI();
@@ -118,7 +121,7 @@ public class RestaurantAppSwing {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
-                currentOrder.addDish(selectedDish);
+                restaurantController.addDishToOrder(selectedDish);
             }
         });
         innerPanel.add(addButton);
@@ -130,7 +133,7 @@ public class RestaurantAppSwing {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
-                currentOrder.removeDish(selectedDish);
+                restaurantController.removeDishFromOrder(selectedDish);
             }
         });
         innerPanel.add(removeButton);
@@ -156,12 +159,12 @@ public class RestaurantAppSwing {
         finalizeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                double total = currentOrder.calculateTotal() + currentOrder.calculateTotal() * 0.1;
+                double total = restaurantController.finalizeOrder();
                 JOptionPane.showMessageDialog(frame, "Total Order + 10% (Service): " + total + " KZT");
 
                 Order savedOrder = currentOrder.copy();
                 savedOrder.saveOrderToHistory();
-                currentOrder.clearOrder();
+                restaurantController.clearOrder();
             }
         });
         innerPanel.add(finalizeButton);
@@ -172,7 +175,7 @@ public class RestaurantAppSwing {
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                currentOrder.clearOrder();
+                restaurantController.clearOrder();
             }
         });
         innerPanel.add(clearButton);
@@ -214,7 +217,7 @@ public class RestaurantAppSwing {
 
         JTextArea historyTextArea = new JTextArea(15, 40);
         historyTextArea.setEditable(false);
-        OrderHistoryAdapter historyAdapter = new OrderHistoryAdapter(Order.getAllOrders());
+        OrderHistoryAdapter historyAdapter = new OrderHistoryAdapter(restaurantController.getOrderHistory());
         historyAdapter.updateOrderHistoryDisplay(historyTextArea);
 
         historyFrame.add(new JScrollPane(historyTextArea));
