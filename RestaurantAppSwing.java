@@ -147,7 +147,7 @@ public class RestaurantAppSwing {
 
         frame.setVisible(true);
     }
-
+//б
     private void updateDishComboBox() {
         String selectedCategory = (String) categoryComboBox.getSelectedItem();
         List<Dish> filteredDishes = menu;
