@@ -1,5 +1,6 @@
 package FinalProject;
 
+import FinalProject.Internal.Adapter.OrderHistoryAdapter;
 import FinalProject.Internal.Factory.*;
 import FinalProject.Internal.Objects.Dish;
 import FinalProject.Internal.Objects.DishCategory;
@@ -130,8 +131,15 @@ public class RestaurantAppSwing {
         finalizeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                double total = currentOrder.calculateTotal()+currentOrder.calculateTotal()*0.1;
-                JOptionPane.showMessageDialog(frame, "Общая сумма заказа + 10% (обслуживание): " +total + " тг");
+                double total = currentOrder.calculateTotal() + currentOrder.calculateTotal() * 0.1;
+                JOptionPane.showMessageDialog(frame, "Общая сумма заказа + 10% (обслуживание): " + total + " тг");
+
+                // Сохраняем заказ в истории
+                Order savedOrder = currentOrder.copy();
+                savedOrder.saveOrderToHistory(); // Добавляем в историю заказов
+
+                // Очищаем текущий заказ
+                currentOrder.clearOrder();
             }
         });
         frame.add(finalizeButton);
@@ -144,6 +152,17 @@ public class RestaurantAppSwing {
             }
         });
         frame.add(clearButton);
+
+
+        // Adding History buttton
+        JButton historyButton = new JButton("История заказов");
+        historyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showOrderHistory();
+            }
+        });
+        frame.add(historyButton);
 
         frame.setVisible(true);
     }
@@ -163,6 +182,21 @@ public class RestaurantAppSwing {
         }
 
         dishComboBox.setModel(new DefaultComboBoxModel<>(filteredDishes.toArray(new Dish[0])));
+    }
+
+    private void showOrderHistory() {
+        JFrame historyFrame = new JFrame("История заказов");
+        historyFrame.setSize(500, 400);
+
+        JTextArea historyTextArea = new JTextArea(15, 40);
+        historyTextArea.setEditable(false);
+
+        // Пример: здесь нужно адаптировать список заказов через адаптер
+        OrderHistoryAdapter historyAdapter = new OrderHistoryAdapter(Order.getAllOrders()); // Получаем все заказы
+        historyAdapter.updateOrderHistoryDisplay(historyTextArea);
+
+        historyFrame.add(new JScrollPane(historyTextArea));
+        historyFrame.setVisible(true);
     }
 
     public static void main(String[] args) {
