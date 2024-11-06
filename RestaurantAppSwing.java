@@ -214,9 +214,7 @@ public class RestaurantAppSwing {
 
         JTextArea historyTextArea = new JTextArea(15, 40);
         historyTextArea.setEditable(false);
-
-        // Пример: здесь нужно адаптировать список заказов через адаптер
-        OrderHistoryAdapter historyAdapter = new OrderHistoryAdapter(Order.getAllOrders()); // Получаем все заказы
+        OrderHistoryAdapter historyAdapter = new OrderHistoryAdapter(Order.getAllOrders());
         historyAdapter.updateOrderHistoryDisplay(historyTextArea);
 
         historyFrame.add(new JScrollPane(historyTextArea));
