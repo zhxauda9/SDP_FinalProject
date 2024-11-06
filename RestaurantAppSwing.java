@@ -6,11 +6,11 @@ import FinalProject.Internal.Objects.Dish;
 import FinalProject.Internal.Objects.DishCategory;
 import FinalProject.Internal.Objects.Order;
 import FinalProject.Internal.Observers.UITextObserver;
+import FinalProject.Internal.RestaurantController;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,14 +20,20 @@ public class RestaurantAppSwing {
     private JComboBox<Dish> dishComboBox;
     private JTextArea orderTextArea;
     private List<Dish> menu;
-    private Order currentOrder;
+    private RestaurantController controller;
     private JComboBox<String> categoryComboBox;
 
     public RestaurantAppSwing() {
-        currentOrder = Order.getInstance();
-        menu = new ArrayList<>();
+        Order currentOrder = Order.getInstance();
+        this.controller = new RestaurantController(currentOrder);
+        this.menu = new ArrayList<>();
+
         initializeMenu();
         initializeUI();
+
+        // Register observer for real-time order updates
+        UITextObserver textObserver = new UITextObserver(orderTextArea);
+        currentOrder.addObserver(textObserver);
     }
 
     private void initializeMenu() {
@@ -67,55 +73,38 @@ public class RestaurantAppSwing {
         menu.add(snackFactory.createDish("Broccoli Apple Salad", 1290));
         menu.add(snackFactory.createDish("Caeser Salad", 1790));
         menu.add(snackFactory.createDish("Crab Salad", 1090));
-
-
-
-
-
     }
 
     private void initializeUI() {
-        frame = new JFrame("Онлайн-заказ ресторана");
+        frame = new JFrame("Online-order restaurant");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(550, 400);
         frame.setLayout(new FlowLayout());
 
-        // Category filter
-        JLabel categoryLabel = new JLabel("Выберите категорию:");
+        JLabel categoryLabel = new JLabel("Choose category:");
         frame.add(categoryLabel);
 
-        categoryComboBox = new JComboBox<>(new String[] {"Все", "Основные блюда", "Напитки", "Закуски", "Десерты"});
-        categoryComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateDishComboBox();
-            }
-        });
+        categoryComboBox = new JComboBox<>(new String[]{"All", "Main dish", "Drinks", "Shacks", "Desserts"});
+        categoryComboBox.addActionListener(e -> updateDishComboBox());
         frame.add(categoryComboBox);
 
-        JLabel menuLabel = new JLabel("Выберите блюдо:");
+        JLabel menuLabel = new JLabel("Choose dish:");
         frame.add(menuLabel);
 
         dishComboBox = new JComboBox<>(menu.toArray(new Dish[0]));
         frame.add(dishComboBox);
 
-        JButton addButton = new JButton("Добавить в заказ");
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
-                currentOrder.addDish(selectedDish);
-            }
+        JButton addButton = new JButton("Add to order");
+        addButton.addActionListener(e -> {
+            Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
+            controller.addDishToOrder(selectedDish);
         });
         frame.add(addButton);
 
-        JButton removeButton = new JButton("Удалить из заказа");
-        removeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
-                currentOrder.removeDish(selectedDish);
-            }
+        JButton removeButton = new JButton("Delete from order");
+        removeButton.addActionListener(e -> {
+            Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
+            controller.removeDishFromOrder(selectedDish);
         });
         frame.add(removeButton);
 
@@ -123,61 +112,35 @@ public class RestaurantAppSwing {
         orderTextArea.setEditable(false);
         frame.add(new JScrollPane(orderTextArea));
 
-        // Register the UITextObserver to listen to changes in the order
-        UITextObserver textObserver = new UITextObserver(orderTextArea);
-        currentOrder.addObserver(textObserver);
-
-        JButton finalizeButton = new JButton("Оформить заказ");
-        finalizeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                double total = currentOrder.calculateTotal() + currentOrder.calculateTotal() * 0.1;
-                JOptionPane.showMessageDialog(frame, "Общая сумма заказа + 10% (обслуживание): " + total + " тг");
-
-                // Сохраняем заказ в истории
-                Order savedOrder = currentOrder.copy();
-                savedOrder.saveOrderToHistory(); // Добавляем в историю заказов
-
-                // Очищаем текущий заказ
-                currentOrder.clearOrder();
-            }
+        JButton finalizeButton = new JButton("Make order");
+        finalizeButton.addActionListener(e -> {
+            double total = controller.finalizeOrder();
+            JOptionPane.showMessageDialog(frame, "Total amount + 10% (service): " + total + " KZT");
         });
         frame.add(finalizeButton);
 
-        JButton clearButton = new JButton("Удалить все заказы");
-        clearButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                currentOrder.clearOrder();
-            }
-        });
+        JButton clearButton = new JButton("Delete all orders");
+        clearButton.addActionListener(e -> controller.clearOrder());
         frame.add(clearButton);
 
-
-        // Adding History buttton
-        JButton historyButton = new JButton("История заказов");
-        historyButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showOrderHistory();
-            }
-        });
+        JButton historyButton = new JButton("Order History");
+        historyButton.addActionListener(e -> showOrderHistory());
         frame.add(historyButton);
 
         frame.setVisible(true);
     }
-//б
+
     private void updateDishComboBox() {
         String selectedCategory = (String) categoryComboBox.getSelectedItem();
         List<Dish> filteredDishes = menu;
 
-        if (selectedCategory.equals("Основные блюда")) {
+        if ("Main dishes".equals(selectedCategory)) {
             filteredDishes = menu.stream().filter(dish -> dish.getCategory() == DishCategory.MAIN_COURSE).collect(Collectors.toList());
-        } else if (selectedCategory.equals("Напитки")) {
+        } else if ("Drinks".equals(selectedCategory)) {
             filteredDishes = menu.stream().filter(dish -> dish.getCategory() == DishCategory.DRINK).collect(Collectors.toList());
-        } else if (selectedCategory.equals("Закуски")) {
+        } else if ("Snacks".equals(selectedCategory)) {
             filteredDishes = menu.stream().filter(dish -> dish.getCategory() == DishCategory.SNACK).collect(Collectors.toList());
-        } else if (selectedCategory.equals("Десерты")) {
+        } else if ("Desserts".equals(selectedCategory)) {
             filteredDishes = menu.stream().filter(dish -> dish.getCategory() == DishCategory.DESSERT).collect(Collectors.toList());
         }
 
@@ -185,14 +148,13 @@ public class RestaurantAppSwing {
     }
 
     private void showOrderHistory() {
-        JFrame historyFrame = new JFrame("История заказов");
+        JFrame historyFrame = new JFrame("Order History");
         historyFrame.setSize(500, 400);
 
         JTextArea historyTextArea = new JTextArea(15, 40);
         historyTextArea.setEditable(false);
 
-        // Пример: здесь нужно адаптировать список заказов через адаптер
-        OrderHistoryAdapter historyAdapter = new OrderHistoryAdapter(Order.getAllOrders()); // Получаем все заказы
+        OrderHistoryAdapter historyAdapter = new OrderHistoryAdapter(controller.getOrderHistory());
         historyAdapter.updateOrderHistoryDisplay(historyTextArea);
 
         historyFrame.add(new JScrollPane(historyTextArea));

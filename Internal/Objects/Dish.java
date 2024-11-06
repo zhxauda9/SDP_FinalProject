@@ -21,6 +21,6 @@ public class Dish {
 
     @Override
     public String toString() {
-        return name + " - " + price + " тг";
+        return name + " - " + price + " KZT";
     }
 }
