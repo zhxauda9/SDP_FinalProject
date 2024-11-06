@@ -1,7 +1,5 @@
 package FinalProject.Internal.Objects;
 
-import FinalProject.Internal.Objects.Dish;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +33,10 @@ public class Order {
     public double calculateTotal() {
         return dishes.stream().mapToDouble(Dish::getPrice).sum();
     }
+
+    public void removeDish(Dish dish) {
+        if (dishes.contains(dish)) {
+            dishes.remove(dish);
+        }
+    }
 }
-
-
