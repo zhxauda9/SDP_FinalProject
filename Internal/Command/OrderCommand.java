@@ -1,2 +1,5 @@
-package FinalProject.Internal.Command;public class OrderCommand {
+package FinalProject.Internal.Command;
+
+public interface OrderCommand {
+    void execute();
 }

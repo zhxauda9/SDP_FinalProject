@@ -1,9 +1,12 @@
 package FinalProject;
 
+import FinalProject.Internal.Command.AddDishCommand;
+import FinalProject.Internal.Command.RemoveDishCommand;
 import FinalProject.Internal.Factory.*;
 import FinalProject.Internal.Objects.Dish;
 import FinalProject.Internal.Objects.DishCategory;
 import FinalProject.Internal.Objects.Order;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -11,7 +14,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 public class RestaurantAppSwing {
     private JFrame frame;
@@ -53,7 +55,7 @@ public class RestaurantAppSwing {
         JLabel categoryLabel = new JLabel("Выберите категорию:");
         frame.add(categoryLabel);
 
-        categoryComboBox = new JComboBox<>(new String[] {"Все", "Основные блюда", "Напитки", "Закуски", "Десерты"});
+        categoryComboBox = new JComboBox<>(new String[]{"Все", "Основные блюда", "Напитки", "Закуски", "Десерты"});
         categoryComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -73,11 +75,26 @@ public class RestaurantAppSwing {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
-                currentOrder.addDish(selectedDish);
-                updateOrderTextArea();
+                if (selectedDish != null) {
+                    new AddDishCommand(currentOrder, selectedDish).execute();
+                    updateOrderTextArea();
+                }
             }
         });
         frame.add(addButton);
+
+        JButton removeButton = new JButton("Удалить из заказа");
+        removeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Dish selectedDish = (Dish) dishComboBox.getSelectedItem();
+                if (selectedDish != null) {
+                    new RemoveDishCommand(currentOrder, selectedDish).execute();
+                    updateOrderTextArea();
+                }
+            }
+        });
+        frame.add(removeButton);
 
         orderTextArea = new JTextArea(10, 30);
         orderTextArea.setEditable(false);
